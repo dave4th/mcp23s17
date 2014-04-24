@@ -208,3 +208,4 @@ for i in range(1,9):
 
 # Provo a modificare sul GIT e scaricarmi in locale la modifca!
 # Adesso il contrario
+# E una modifica un locale
