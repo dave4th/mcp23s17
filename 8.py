@@ -206,8 +206,3 @@ for i in range(1,9):
   print hex(int('00110100',2))
   mcp23s17.writebytes([Indirizzo,GPIOA,0x34])
 
-# Provo a modificare sul GIT e scaricarmi in locale la modifca!
-# Adesso il contrario
-# E una modifica un locale
-# --
-# ora modifico su git
