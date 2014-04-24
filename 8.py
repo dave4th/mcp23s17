@@ -207,3 +207,4 @@ for i in range(1,9):
   mcp23s17.writebytes([Indirizzo,GPIOA,0x34])
 
 # Provo a modificare sul GIT e scaricarmi in locale la modifca!
+# Adesso il contrario
