@@ -140,7 +140,7 @@ def DisplayOnePattern(Valore):
 # per Settore, 4/8 (sinistra/destra) ?
 # forse meglio aggiungere il calcolo "automatico" del settore ?
 def DisplayVaiAPosizione(PaginaX,ColonnaY,Settore):
-  #global MemoriaPaginaX, MemoriaColonnaY, MemoriaLineaZ, MemoriaSettore # Uso le variabili globali
+  global MemoriaPaginaX, MemoriaColonnaY, MemoriaLineaZ, MemoriaSettore # Uso le variabili globali
   DisplayInvioComando(PageX+PaginaX,Settore)
   DisplayInvioComando(AddressY+ColonnaY,Settore)
   MemoriaPaginaX = PaginaX
@@ -155,8 +155,9 @@ def DisplayMemoriaDiPosizione():
   global MemoriaPaginaX, MemoriaColonnaY, MemoriaLineaZ, MemoriaSettore # Uso le variabili globali
   # Incremento ogni volta ?
   MemoriaColonnaY = MemoriaColonnaY + 1
-  # Se ho scritto colonna 63, la devo azzerare e spostare il riquadro
-  if MemoriaColonnaY == 63:
+  # Se ho scritto colonna 64, la devo azzerare e spostare il riquadro
+  # 64 perche` il conteggio e` +1, quindi la colonna 0 e` 1, ecc.ecc.
+  if MemoriaColonnaY == 64:
     # Se mi trovavo a destra, devo incrementare la pagina e tornare a sinistra
     if MemoriaSettore == 8:
       MemoriaPaginaX = MemoriaPaginaX + 1
@@ -175,7 +176,7 @@ def DisplayMemoriaDiPosizione():
 DisplayOff()
 time.sleep(1)
 # Sbianco
-DisplayOnePattern(0x00)  # 0 o 255, oppure 0x00 o 0xFF
+DisplayOnePattern(0xFF)  # 0 o 255, oppure 0x00 o 0xFF
 # Riaccendo
 DisplayOn()
 
@@ -288,12 +289,12 @@ DizionarioCaratteri[' '] = ['0x7F', '0x55', '0x49', '0x55', '0x7F']
 # ----- Fine elenco caratteri -----
 
 time.sleep(1)
-DisplayVaiAPosizione(0,0,4)
+DisplayVaiAPosizione(7,0,4)
 #Merda = input("Ferma il programma!!! .. CTRL+C")
 
 
 # Parola da stampare
-Parola="+ Prova Display 128x64 + "
+Parola="+ Prova Diosplay 128x64 + "
 # Tempo di ritardo dello "scroll"
 #TimeScroll=.3
 
@@ -305,6 +306,11 @@ for Lettera in Parola:
     Lettera = 'space'
   # Calcolo lunghezza lettera
   Lunghezza = len(DizionarioCaratteri[Lettera])
+  # !!!!
+  # Adesso devo trovare il modo di non spezzare la lettera che sto` scrivendo quando sono alla fine del secondo settore
+  # Ovviamente devo anche modificare i valori di posizione, o forse prima/durante la manovra, boh ?!?!
+  # DA PENSARE !!!
+  # !!!!
   # Per ogni valore, invio il dato al display
   for i in range(0,Lunghezza):
     # Ho dovuto dirgli che e` un esadecimale "int(val,16)"
@@ -312,8 +318,9 @@ for Lettera in Parola:
   DisplayInvioDato(0,MemoriaSettore) # Colonna vuota
 
 Merda = input("Ferma il programma!!! .. CTRL+C")
-
-
+################################################
+#Il programma si ferma qua, il resto e` rimasto dalle prove precedenti
+######################################################################
 
 # Prova/e 1
 
