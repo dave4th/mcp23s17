@@ -44,6 +44,7 @@ GPIOA_EN = 128 # Enable
 GPIOA_RW = 64 # Read/Write
 GPIOA_DI = 32 # Data/Instruction
 GPIOA_RST = 16    # ~Reset
+# Il display e` diviso in due aree di 64x64
 GPIOA_CS2 = 8    # Riquadro destro
 GPIOA_CS1 = 4    # Riquadro sinistro
 # Per l'istruzione: EN+RST+CS1[+CS2]
@@ -70,19 +71,25 @@ mcp23s17.writebytes([Indirizzo,IODIRA,0x00])
 # IODIRB
 mcp23s17.writebytes([Indirizzo,IODIRB,0x00])
 
+
 # Reset display
-# abbasso e rialzo il bit di reset (5)
-mcp23s17.writebytes([Indirizzo,GPIOA,0x00])
-time.sleep(1)
-mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST])
-# Che poi, non ho capito cosa resetta, visto che devo "sbiancarlo".
+# Teoricamente questa funzione dovrebbe resettare i registri e
+# riportare il display alla posizione 0,0
+# I registri non mi e` sembrato vengano azzerati, la posizione
+# e` da provare.
+def DisplayReset():
+  # abbasso e rialzo il bit di reset (5)
+  mcp23s17.writebytes([Indirizzo,GPIOA,0x00])
+  time.sleep(0.05)
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST])
+
 
 # Funzione generica per inviare un comando al display
 # Settore puo`/deve essere:
 # 4 per sinsitra
 # 8 per destra
 # 12 per entrambi
-def DisplayComando(Valore,Settore):
+def DisplayInvioComando(Valore,Settore):
   mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RST+Settore])
   mcp23s17.writebytes([Indirizzo,GPIOB,Valore])
   mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST+Settore])
@@ -92,7 +99,7 @@ def DisplayComando(Valore,Settore):
 # 4 per sinsitra
 # 8 per destra
 # 12 per entrambi
-def DisplayDato(Valore,Settore):
+def DisplayInvioDato(Valore,Settore):
   mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_DI+GPIOA_RST+Settore])
   mcp23s17.writebytes([Indirizzo,GPIOB,Valore])
   mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_DI+GPIOA_RST+Settore])
@@ -102,33 +109,40 @@ def DisplayDato(Valore,Settore):
 # provo! non sono sicuro pero` che siano questi i comandi
 def DisplayOff():
   # E R/W D/I RST CS2 CS1 x x
-  mcp23s17.writebytes([Indirizzo,GPIOA,int('10011100',2)])
-  mcp23s17.writebytes([Indirizzo,GPIOB,int('00111110',2)])
-  mcp23s17.writebytes([Indirizzo,GPIOA,int('00011100',2)])
+  #mcp23s17.writebytes([Indirizzo,GPIOA,int('10011100',2)])
+  #mcp23s17.writebytes([Indirizzo,GPIOB,int('00111110',2)])
+  #mcp23s17.writebytes([Indirizzo,GPIOA,int('00011100',2)])
+  DisplayInvioComando(62,12)
 
 def DisplayOn():
-  mcp23s17.writebytes([Indirizzo,GPIOA,int('10011100',2)])
-  mcp23s17.writebytes([Indirizzo,GPIOB,int('00111111',2)])
-  mcp23s17.writebytes([Indirizzo,GPIOA,int('00011100',2)])
+  #mcp23s17.writebytes([Indirizzo,GPIOA,int('10011100',2)])
+  #mcp23s17.writebytes([Indirizzo,GPIOB,int('00111111',2)])
+  #mcp23s17.writebytes([Indirizzo,GPIOA,int('00011100',2)])
+  DisplayInvioComando(63,12)
+
 
 # Funzione display, sbianca o scurisce
-def DisplayReset(BlackOrWhite):
+def DisplayBlackOrWhite(BlackOrWhite):
   # Mentre la colonna viene incrementata automaticamente,
   # la pagina no (?)
   for i in range(0,8):
-    mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+    #mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
     # X 0 (Pagina 0-7)
-    mcp23s17.writebytes([Indirizzo,GPIOB,PageX+i])
-    mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+    #mcp23s17.writebytes([Indirizzo,GPIOB,PageX+i])
+    #mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+    DisplayInvioComando(PageX+i,12)
     
-    mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+    #mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
     # Y 0 (Colonna 0-63)
-    mcp23s17.writebytes([Indirizzo,GPIOB,AddressY+0])
-    mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+    #mcp23s17.writebytes([Indirizzo,GPIOB,AddressY+0])
+    #mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+    DisplayInvioComando(AddressY+0,12)
+    
     for i in range(0,64):
-      mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_DI+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
-      mcp23s17.writebytes([Indirizzo,GPIOB,BlackOrWhite])
-      mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_DI+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+      #mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_DI+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+      #mcp23s17.writebytes([Indirizzo,GPIOB,BlackOrWhite])
+      #mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_DI+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+      DisplayInvioDato(BlackOrWhite,12)
 
 #### NON VA BENE, E` DA CORREGGERE
 # Goto Position #
@@ -136,28 +150,26 @@ def DisplayReset(BlackOrWhite):
 # per X, 0 .. 7 (pagina)
 # per Y, 0 .. 63 (colonna)
 # per Settore, 4/8 (sinistra/destra) ?
-def DisplayGotoPosition(PageX,ColumnY,Sector):
-  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RST+Sector])
-  mcp23s17.writebytes([Indirizzo,GPIOB,PageX])
-  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST+Sector])
-  
-  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RST+Sector])
-  mcp23s17.writebytes([Indirizzo,GPIOB,ColumnY])
-  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RST+Sector])
+def DisplayVaiAPosizione(PaginaX,ColonnaY,Settore):
+  AddressY = 64 # Colonna 0-63, es. per colonna 15: AddressY+15 (attenzione allo 0)
+  PageX = 184 # Pagina 0-7, es. per pagina 2: PageX+2 (attenzione allo 0)
+  DisplayInvioComando(PageX+PaginaX,Settore)
+  DisplayInvioComando(AddressY+ColonnaY,Settore)
 
 
 DisplayOff()
-DisplayReset(0x00)  # 0 o 255, oppure 0x00 o 0xFF
+DisplayBlackOrWhite(0x00)  # 0 o 255, oppure 0x00 o 0xFF
 #DisplayResetBlack()
 DisplayOn()
 
-#time.sleep(100)
 
-DisplayGotoPosition(1,40,4)
-
-mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_DI+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
-mcp23s17.writebytes([Indirizzo,GPIOB,BlackOrWhite])
-mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_DI+GPIOA_RST+GPIOA_CS2+GPIOA_CS1])
+DisplayVaiAPosizione(1,2,4)
+DisplayInvioDato(0xFF,4)
+DisplayReset() #Come volevasi dimostrare, non cancella i dati, forse azzera la posizione ?
+DisplayInvioDato(0xFF,4) # No, non azzera niente, il dato viene scritto nella colonna successiva
+DisplayOn()
+input("Il dato scrive alla terza colonna seconda riga (pagina) .. CTRL+C")
+# Ho messo l'input per interrompere qua il programma.
 
 ################## Prove
 # E 8o bit
