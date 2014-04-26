@@ -133,6 +133,16 @@ def DisplayOnePattern(Valore):
     for i in range(0,64):
       DisplayInvioDato(Valore,12)
 
+# Funzione riempimento display con pattern.
+# La colonna (Y) viene incrementata automaticamente, la pagina (X) no!
+# !!! Non cambiano le memorie di posizione ? !!!
+def DisplayOneRecPattern(Valore,StartPaginaX,StopPaginaX,StartColonnaY,StopColonnaY,Settore):
+  for i in range(StartPaginaX,StopPaginaX+1):
+    DisplayInvioComando(PageX+i,Settore)
+    DisplayInvioComando(AddressY+0,Settore)
+    for i in range(StartColonnaY,StopColonnaY):
+      DisplayInvioDato(Valore,Settore)
+
 # Goto Position #
 # Le coordinate sono:
 # per X, 0 .. 7 (pagina)
@@ -174,7 +184,7 @@ def DisplayMemoriaDiPosizione():
 
 # Spengo
 DisplayOff()
-time.sleep(1)
+#time.sleep(1)
 # Sbianco
 DisplayOnePattern(0xFF)  # 0 o 255, oppure 0x00 o 0xFF
 # Riaccendo
@@ -288,13 +298,12 @@ DizionarioCaratteri['~'] = ['0x30', '0x08', '0x10', '0x20', '0x18']
 DizionarioCaratteri[' '] = ['0x7F', '0x55', '0x49', '0x55', '0x7F']
 # ----- Fine elenco caratteri -----
 
-time.sleep(1)
-DisplayVaiAPosizione(7,0,4)
-#Merda = input("Ferma il programma!!! .. CTRL+C")
+#time.sleep(1)
+DisplayVaiAPosizione(0,0,4)
 
 
 # Parola da stampare
-Parola="+ Prova Diosplay 128x64 + "
+Parola="+ Prova Display 128x64 + Con una frase piu` lunga per controllare che non siano tagliate le lettere."
 # Tempo di ritardo dello "scroll"
 #TimeScroll=.3
 
@@ -302,90 +311,66 @@ Parola="+ Prova Diosplay 128x64 + "
 # Per ogni lettera contenuta nella Parola (frase)
 for Lettera in Parola:
   # Ho dovuto identificare lo spazio, aggiungendo una parola al dizionario
-  if Lettera == ' ':
+  if Lettera == ' ' or Lettera == '\n': # Metto uno spazio anche se ho raggiunto la fine riga ?
     Lettera = 'space'
   # Calcolo lunghezza lettera
   Lunghezza = len(DizionarioCaratteri[Lettera])
-  # !!!!
   # Adesso devo trovare il modo di non spezzare la lettera che sto` scrivendo quando sono alla fine del secondo settore
-  # Ovviamente devo anche modificare i valori di posizione, o forse prima/durante la manovra, boh ?!?!
-  # DA PENSARE !!!
-  # !!!!
+  if (MemoriaColonnaY+Lunghezza >= 64) and (MemoriaSettore == 8):
+    MemoriaPaginaX = MemoriaPaginaX + 1
+      # Se sono andato oltre le pagine, devo ricominciare dall'alto, azzerando la pagina
+    if MemoriaPaginaX == 8:
+      MemoriaPaginaX = 0
+    MemoriaSettore = 4
+    MemoriaColonnaY = 0
+    DisplayVaiAPosizione(MemoriaPaginaX,MemoriaColonnaY,MemoriaSettore)
+  
   # Per ogni valore, invio il dato al display
   for i in range(0,Lunghezza):
     # Ho dovuto dirgli che e` un esadecimale "int(val,16)"
+    #DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
     DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
-  DisplayInvioDato(0,MemoriaSettore) # Colonna vuota
+  DisplayInvioDato(0,MemoriaSettore) # Colonna vuota per separare le lettere.
+
+# Provo con un file di testo
+Linea = open ("testo.txt", "r")
+while 1:
+  LineaPerLettera = Linea.readline()
+  if LineaPerLettera == "":
+      break
+  for Lettera in LineaPerLettera:
+    # Ho dovuto identificare lo spazio, aggiungendo una parola al dizionario
+    if Lettera == ' ' or Lettera == '\n': # Metto uno spazio anche se ho raggiunto la fine riga ?
+      Lettera = 'space'
+    # Calcolo lunghezza lettera
+    Lunghezza = len(DizionarioCaratteri[Lettera])
+    # Adesso devo trovare il modo di non spezzare la lettera che sto` scrivendo quando sono alla fine del secondo settore
+    if (MemoriaColonnaY+Lunghezza >= 64) and (MemoriaSettore == 8):
+      MemoriaPaginaX = MemoriaPaginaX + 1
+        # Se sono andato oltre le pagine, devo ricominciare dall'alto, azzerando la pagina
+      if MemoriaPaginaX == 8:
+        MemoriaPaginaX = 0
+      MemoriaSettore = 4
+      MemoriaColonnaY = 0
+      DisplayVaiAPosizione(MemoriaPaginaX,MemoriaColonnaY,MemoriaSettore)
+    
+    # Per ogni valore, invio il dato al display
+    for i in range(0,Lunghezza):
+      # Ho dovuto dirgli che e` un esadecimale "int(val,16)"
+      #DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
+      DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
+    DisplayInvioDato(0,MemoriaSettore) # Colonna vuota per separare le lettere.
 
 Merda = input("Ferma il programma!!! .. CTRL+C")
-################################################
-#Il programma si ferma qua, il resto e` rimasto dalle prove precedenti
-######################################################################
+# Il resto e` solo un po` di "debug"
+print MemoriaPaginaX, MemoriaColonnaY, MemoriaLineaZ, MemoriaSettore
+DisplayOneRecPattern(0xFF,0,0,9,17,4)
+print MemoriaPaginaX, MemoriaColonnaY, MemoriaLineaZ, MemoriaSettore
 
-# Prova/e 1
+DisplayInvioDato(0x11,MemoriaSettore)
+DisplayInvioDato(0x11,MemoriaSettore)
+DisplayInvioDato(0x11,MemoriaSettore)
+DisplayInvioDato(0x11,MemoriaSettore)
+print MemoriaPaginaX, MemoriaColonnaY, MemoriaLineaZ, MemoriaSettore
 
-#DisplayVaiAPosizione(1,63,4)
-DisplayInvioDato(0xF1,4)
-DisplayReset() #Come volevasi dimostrare, non cancella i dati, forse azzera la posizione ?
-DisplayInvioDato(0xF2,4) # No, non azzera niente, il dato viene scritto nella colonna successiva
-DisplayOn()
-Merda = input("Il dato scrive alla terza colonna seconda riga (pagina) .. CTRL+C")
-# Ho messo l'input per interrompere qua il programma.
-
-print DizionarioCaratteri['A'][1]
-print DizionarioCaratteri['B']
-print DizionarioCaratteri['I'][0]
-print len(DizionarioCaratteri['I'])
-print len(DizionarioCaratteri['B'])
-
-Merda = input("Il dato scrive alla terza colonna seconda riga (pagina) .. CTRL+C")
-
-
-
-################## Prove
-# E 8o bit
-# RST 5o bit
-# CS1 3o bit
-print hex(int('10010100',2))
-mcp23s17.writebytes([Indirizzo,GPIOA,0x94])
-time.sleep(1)
-
-# Y, Colonna 0
-print hex(int('01000000',2))
-mcp23s17.writebytes([Indirizzo,GPIOB,0x40])
-time.sleep(1)
-# Tolgo E
-print hex(int('00010100',2))
-mcp23s17.writebytes([Indirizzo,GPIOA,0x14])
-time.sleep(1)
-
-print hex(int('10010100',2))
-mcp23s17.writebytes([Indirizzo,GPIOA,0x94])
-
-# X, Pagina 0
-print hex(int('10111000',2))
-mcp23s17.writebytes([Indirizzo,GPIOB,0xB8])
-time.sleep(1)
-# Tolgo E
-print hex(int('00010100',2))
-mcp23s17.writebytes([Indirizzo,GPIOA,0x14])
-time.sleep(1)
-
-print 'start'
-for i in range(1,9):
-# E 8o bit
-# D/I 6o pixel
-# RST 5o bit
-# CS1 3o bit
-  print hex(int('10110100',2))
-  mcp23s17.writebytes([Indirizzo,GPIOA,0xB4])
-  #mcp23s17.writebytes([Indirizzo,GPIOA,int('10110100',2)])
-
-  # Setto il dato 
-  print hex(int('00000001',2))
-  mcp23s17.writebytes([Indirizzo,GPIOB,0xFF])
-  time.sleep(1)
-# Tolgo E
-  print hex(int('00110100',2))
-  mcp23s17.writebytes([Indirizzo,GPIOA,0x34])
-
+#Merda = input("Ferma il programma!!! .. CTRL+C")
