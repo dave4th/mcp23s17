@@ -16,6 +16,7 @@ mcp23s17=spidev.SpiDev(0,0)
 # e settando una variabile nel REGISTER ADDRESS "IOCON"
 # al momento non sara` utilizzato.
 Indirizzo = 0x40 # Indirizzo default dell'integrato
+IndirizzoRead = 0x41 # Indirizzo default per lettura dell'integrato
 
 # Indirizzi REGISTER ADDRESS che controllano la configurazione
 # Input / Output
@@ -112,6 +113,45 @@ def DisplayInvioDato(Valore,Settore):
     DisplayMemoriaDiPosizione() # Ogni volta che invio un dato la colonna si incrementa,
                                 # quindi devo andare a ricalcolare la posizione.
 
+# Funzione generica per leggere il comando ?
+def DisplayLeggiComando(Settore):
+  # IODIRB
+  mcp23s17.writebytes([Indirizzo,IODIRB,0xFF])  # Metto come ingressi
+  #mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RW+GPIOA_RST+Settore])
+  #mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RW+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RW+GPIOA_RST+Settore])
+  #time.sleep(0.1)
+  variabile = mcp23s17.xfer([IndirizzoRead,GPIOB,0x00])
+  print variabile
+  print "Comando"
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RW+GPIOA_RST+Settore])
+  # IODIRB
+  mcp23s17.writebytes([Indirizzo,IODIRB,0x00])  # Rimetto come uscite
+
+# Funzione generica leggere un dato ?
+def DisplayLeggiDato(Settore):
+  # IODIRB
+  mcp23s17.writebytes([Indirizzo,IODIRB,0xFF])  # Metto come ingressi
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_EN+GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  #time.sleep(0.1)
+  variabile = mcp23s17.xfer([IndirizzoRead,GPIOB,0x00])
+  print variabile
+  print "Dato"
+  mcp23s17.writebytes([Indirizzo,GPIOA,GPIOA_RW+GPIOA_DI+GPIOA_RST+Settore])
+  if Settore != 12:
+    DisplayMemoriaDiPosizione() # Ogni volta che invio un dato la colonna si incrementa,
+                                # quindi devo andare a ricalcolare la posizione.
+  # IODIRB
+  mcp23s17.writebytes([Indirizzo,IODIRB,0x00])  # Rimetto come uscite
+
 
 
 # Mi sa che sia da accendere il display
@@ -186,7 +226,7 @@ def DisplayMemoriaDiPosizione():
 DisplayOff()
 #time.sleep(1)
 # Sbianco
-DisplayOnePattern(0xFF)  # 0 o 255, oppure 0x00 o 0xFF
+DisplayOnePattern(0x00)  # 0 o 255, oppure 0x00 o 0xFF
 # Riaccendo
 DisplayOn()
 
@@ -298,43 +338,64 @@ DizionarioCaratteri['~'] = ['0x30', '0x08', '0x10', '0x20', '0x18']
 DizionarioCaratteri[' '] = ['0x7F', '0x55', '0x49', '0x55', '0x7F']
 # ----- Fine elenco caratteri -----
 
+
+# Funzione scrivi frase
+# E` possibile definire se 'nero' (0), o 'bianco su fondo nero' (255)
+# Lascio aperto a soluzioni 'differenti e strane', con una variabile Pattern.
+def DisplayScriviTesto(Testo,Pattern):
+  global MemoriaPaginaX, MemoriaColonnaY, MemoriaLineaZ, MemoriaSettore # Uso le variabili globali
+  
+  for Lettera in Testo:
+    # Ho dovuto identificare lo spazio, aggiungendo una parola al dizionario
+    if Lettera == ' ' or Lettera == '\n': # Metto uno spazio anche se ho raggiunto la fine riga ?
+      Lettera = 'space'
+    # Calcolo lunghezza lettera
+    Lunghezza = len(DizionarioCaratteri[Lettera])
+    # Adesso devo trovare il modo di non spezzare la lettera che sto` scrivendo quando sono alla fine del secondo settore
+    if (MemoriaColonnaY+Lunghezza >= 64) and (MemoriaSettore == 8):
+      MemoriaPaginaX = MemoriaPaginaX + 1
+        # Se sono andato oltre le pagine, devo ricominciare dall'alto, azzerando la pagina
+      if MemoriaPaginaX == 8:
+        MemoriaPaginaX = 0
+      MemoriaSettore = 4
+      MemoriaColonnaY = 0
+      DisplayVaiAPosizione(MemoriaPaginaX,MemoriaColonnaY,MemoriaSettore)
+    
+    # Per ogni valore, invio il dato al display
+    for i in range(0,Lunghezza):
+      if Pattern == 255:
+        DisplayInvioDato(Pattern-int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
+      # Ho dovuto dirgli che e` un esadecimale "int(val,16)"
+      #DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
+      if Pattern == 0:
+        DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
+    DisplayInvioDato(Pattern,MemoriaSettore) # Colonna vuota per separare le lettere.
+
 #time.sleep(1)
 DisplayVaiAPosizione(0,0,4)
 
+DisplayScriviTesto("Scrivo un testo",0)
 
-# Parola da stampare
-Parola="+ Prova Display 128x64 + Con una frase piu` lunga per controllare che non siano tagliate le lettere."
-# Tempo di ritardo dello "scroll"
-#TimeScroll=.3
+DisplayVaiAPosizione(1,0,4)
 
-# Prova del Programma
-# Per ogni lettera contenuta nella Parola (frase)
-for Lettera in Parola:
-  # Ho dovuto identificare lo spazio, aggiungendo una parola al dizionario
-  if Lettera == ' ' or Lettera == '\n': # Metto uno spazio anche se ho raggiunto la fine riga ?
-    Lettera = 'space'
-  # Calcolo lunghezza lettera
-  Lunghezza = len(DizionarioCaratteri[Lettera])
-  # Adesso devo trovare il modo di non spezzare la lettera che sto` scrivendo quando sono alla fine del secondo settore
-  if (MemoriaColonnaY+Lunghezza >= 64) and (MemoriaSettore == 8):
-    MemoriaPaginaX = MemoriaPaginaX + 1
-      # Se sono andato oltre le pagine, devo ricominciare dall'alto, azzerando la pagina
-    if MemoriaPaginaX == 8:
-      MemoriaPaginaX = 0
-    MemoriaSettore = 4
-    MemoriaColonnaY = 0
-    DisplayVaiAPosizione(MemoriaPaginaX,MemoriaColonnaY,MemoriaSettore)
-  
-  # Per ogni valore, invio il dato al display
-  for i in range(0,Lunghezza):
-    # Ho dovuto dirgli che e` un esadecimale "int(val,16)"
-    #DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
-    DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
-  DisplayInvioDato(0,MemoriaSettore) # Colonna vuota per separare le lettere.
+DisplayScriviTesto("Scrivo un testo negativo",255)
+
+DisplayVaiAPosizione(0,0,4)
+
+for i in range(0,8):
+  #DisplayLeggiComando(4)
+  DisplayLeggiDato(4)
+
+DisplayVaiAPosizione(1,0,4)
+#DisplayLeggiComando(4)
+DisplayLeggiDato(4)
+
+
+Merda = input("Ferma il programma!!! .. CTRL+C")
 
 # Provo con un file di testo
 Linea = open ("testo.txt", "r")
-while 1:
+while True:
   LineaPerLettera = Linea.readline()
   if LineaPerLettera == "":
       break
@@ -360,6 +421,7 @@ while 1:
       #DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
       DisplayInvioDato(int(DizionarioCaratteri[Lettera][i],16),MemoriaSettore)
     DisplayInvioDato(0,MemoriaSettore) # Colonna vuota per separare le lettere.
+
 
 Merda = input("Ferma il programma!!! .. CTRL+C")
 # Il resto e` solo un po` di "debug"
