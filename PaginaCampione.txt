@@ -1,0 +1,17 @@
+Vengono scritte sul display solamente le righe che hanno il pattern indicato,
+cioe` quelle che hanno 000 o 255.
+000: Posso scrivere quello che mi pare,
+---  Anche qua, ma non verra` iviata al display ;)
+255: Doveva andare a capo da solo, ma ho cambiato alcune cose.
+000: Senza rompere i coglioni.
+
+
+000: Posso (credo) andare a capo semplicemente metten-
+
+000: do un a capo in lingua italiana ;)
+
+Qua dobbiamo inventarci qualcosa.
+Una pagina di 8 righe per ? colonne, leggibile ed interpretabile dal programma display
+Che venga letta, ripulita e "stampata" ?
+Se le lettere sono lunghe 5px +1 di spazio = 6px, le colonne sono 128, ci stanno:
+128/6 = 21 caratteri !!!
